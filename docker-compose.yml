@@ -1,0 +1,54 @@
+--- 
+    cadvisor: 
+      container_name: monitoring_cadvisor
+      expose: 
+        - 8080
+      image: "google/cadvisor:latest"
+      restart: unless-stopped
+      volumes: 
+        - "/:/rootfs:ro"
+        - "/var/run:/var/run:rw"
+        - "/sys:/sys:ro"
+        - "/var/lib/docker/:/var/lib/docker:ro"
+    grafana: 
+      container_name: monitoring_grafana
+      environment: 
+        - GF_SECURITY_ADMIN_PASSWORD=W3!com301
+        - GF_USERS_ALLOW_SIGN_UP=false
+        - GF_SERVER_DOMAIN=reqsinc.com
+        - GF_SMTP_ENABLED=true
+        - "GF_SMTP_HOST=smtp.gmail.com:587"
+        - GF_SMTP_USER=anki17345@gmail.com
+        - GF_SMTP_PASSWORD=W3!com301
+        - GF_SMTP_FROM_ADDRESS=anki17345@gmail.com
+      image: "grafana/grafana:latest"
+      links: 
+        - "prometheus:prometheus"
+      restart: unless-stopped
+      volumes: 
+        - "./data/grafana:/var/lib/grafana"
+    node-exporter: 
+      container_name: monitoring_node_exporter
+      expose: 
+        - 9100
+      image: "prom/node-exporter:latest"
+      restart: unless-stopped
+    prometheus: 
+      command: 
+        - "-config.file=/etc/prometheus/prometheus.yml"
+        - "-storage.local.path=/prometheus"
+        - "-alertmanager.url=http://alertmanager:9093"
+      container_name: monitoring_prometheus
+      expose: 
+        - 9090
+      image: "prom/prometheus:latest"
+      links: 
+        - "cadvisor:cadvisor"
+        - "node-exporter:node-exporter"
+      ports: 
+        - "9090:9090"
+      restart: unless-stopped
+      volumes: 
+        - "./data/prometheus/config:/etc/prometheus/"
+        - "./data/prometheus/data:/prometheus"
+    
